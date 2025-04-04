@@ -32,7 +32,7 @@ export default function CharacterStats() {
 
       <div className="mt-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Stats</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Strength</h4>
             <p className="text-xl font-bold text-red-600 dark:text-red-400">{character.stats.strength}</p>
@@ -42,8 +42,16 @@ export default function CharacterStats() {
             <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{character.stats.intelligence}</p>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Agility</h4>
-            <p className="text-xl font-bold text-green-600 dark:text-green-400">{character.stats.agility}</p>
+            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Skill</h4>
+            <p className="text-xl font-bold text-green-600 dark:text-green-400">{character.stats.skill}</p>
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Wisdom</h4>
+            <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{character.stats.wisdom}</p>
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Spirit</h4>
+            <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{character.stats.spirit}</p>
           </div>
         </div>
       </div>

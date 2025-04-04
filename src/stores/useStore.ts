@@ -19,7 +19,9 @@ export const useStore = create<Store>((set) => ({
     stats: {
       strength: 10,
       intelligence: 10,
-      agility: 10,
+      skill: 10,
+      wisdom: 10,
+      spirit: 10,
     },
     streak: 0,
     lastQuestCompleted: null,
@@ -50,9 +52,11 @@ export const useStore = create<Store>((set) => ({
       const newXpToNextLevel = newLevel * 100
 
       const newStats = {
-        strength: state.character.stats.strength + quest.statBoosts.strength,
-        intelligence: state.character.stats.intelligence + quest.statBoosts.intelligence,
-        agility: state.character.stats.agility + quest.statBoosts.agility,
+        strength: state.character.stats.strength + (quest.statBoosts.strength || 0),
+        intelligence: state.character.stats.intelligence + (quest.statBoosts.intelligence || 0),
+        skill: state.character.stats.skill + (quest.statBoosts.skill || 0),
+        wisdom: state.character.stats.wisdom + (quest.statBoosts.wisdom || 0),
+        spirit: state.character.stats.spirit + (quest.statBoosts.spirit || 0),
       }
 
       const lastQuestCompleted = new Date().toISOString()

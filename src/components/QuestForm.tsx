@@ -14,7 +14,9 @@ export default function QuestForm() {
     statBoosts: {
       strength: 0,
       intelligence: 0,
-      agility: 0,
+      skill: 0,
+      wisdom: 0,
+      spirit: 0,
     },
   })
 
@@ -36,7 +38,9 @@ export default function QuestForm() {
       statBoosts: {
         strength: 0,
         intelligence: 0,
-        agility: 0,
+        skill: 0,
+        wisdom: 0,
+        spirit: 0,
       },
     })
   }
@@ -113,7 +117,7 @@ export default function QuestForm() {
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div>
           <label
             htmlFor="strength"
@@ -166,21 +170,71 @@ export default function QuestForm() {
 
         <div>
           <label
-            htmlFor="agility"
+            htmlFor="skill"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Agility Boost
+            Skill Boost
           </label>
           <input
             type="number"
-            id="agility"
-            value={formData.statBoosts.agility}
+            id="skill"
+            value={formData.statBoosts.skill}
             onChange={(e) =>
               setFormData({
                 ...formData,
                 statBoosts: {
                   ...formData.statBoosts,
-                  agility: Number(e.target.value),
+                  skill: Number(e.target.value),
+                },
+              })
+            }
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="wisdom"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Wisdom Boost
+          </label>
+          <input
+            type="number"
+            id="wisdom"
+            value={formData.statBoosts.wisdom}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                statBoosts: {
+                  ...formData.statBoosts,
+                  wisdom: Number(e.target.value),
+                },
+              })
+            }
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            min="0"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="spirit"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Spirit Boost
+          </label>
+          <input
+            type="number"
+            id="spirit"
+            value={formData.statBoosts.spirit}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                statBoosts: {
+                  ...formData.statBoosts,
+                  spirit: Number(e.target.value),
                 },
               })
             }

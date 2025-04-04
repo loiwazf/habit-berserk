@@ -8,9 +8,11 @@ export interface Quest {
   type: QuestType
   xpReward: number
   statBoosts: {
-    strength: number
-    intelligence: number
-    agility: number
+    strength?: number
+    intelligence?: number
+    skill?: number
+    wisdom?: number
+    spirit?: number
   }
   status: QuestStatus
   createdAt: string

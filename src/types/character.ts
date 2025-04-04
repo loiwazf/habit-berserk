@@ -1,18 +1,16 @@
 export interface CharacterStats {
   strength: number
   intelligence: number
-  agility: number
+  skill: number
+  wisdom: number
+  spirit: number
 }
 
 export interface Character {
   level: number
   xp: number
   xpToNextLevel: number
-  stats: {
-    strength: number
-    intelligence: number
-    agility: number
-  }
+  stats: CharacterStats
   streak: number
   lastQuestCompleted: string | null
 } 
