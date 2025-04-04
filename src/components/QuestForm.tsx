@@ -18,6 +18,9 @@ export default function QuestForm() {
       wisdom: 0,
       spirit: 0,
     },
+    dueDate: '',
+    isPersistent: false,
+    maxCompletions: 1,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,6 +31,9 @@ export default function QuestForm() {
       type: formData.type,
       xpReward: formData.xpReward,
       statBoosts: formData.statBoosts,
+      dueDate: formData.dueDate || undefined,
+      isPersistent: formData.isPersistent,
+      maxCompletions: formData.maxCompletions,
     })
     // Reset form
     setFormData({
@@ -42,6 +48,9 @@ export default function QuestForm() {
         wisdom: 0,
         spirit: 0,
       },
+      dueDate: '',
+      isPersistent: false,
+      maxCompletions: 1,
     })
   }
 
@@ -95,6 +104,7 @@ export default function QuestForm() {
         >
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
           <option value="custom">Custom</option>
         </select>
       </div>
@@ -243,6 +253,57 @@ export default function QuestForm() {
           />
         </div>
       </div>
+
+      <div>
+        <label
+          htmlFor="dueDate"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Due Date
+        </label>
+        <input
+          type="date"
+          id="dueDate"
+          value={formData.dueDate}
+          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+        />
+      </div>
+
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="isPersistent"
+          checked={formData.isPersistent}
+          onChange={(e) => setFormData({ ...formData, isPersistent: e.target.checked })}
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+        <label
+          htmlFor="isPersistent"
+          className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+        >
+          Persistent Quest
+        </label>
+      </div>
+
+      {formData.isPersistent && (
+        <div>
+          <label
+            htmlFor="maxCompletions"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Max Completions
+          </label>
+          <input
+            type="number"
+            id="maxCompletions"
+            value={formData.maxCompletions}
+            onChange={(e) => setFormData({ ...formData, maxCompletions: Number(e.target.value) })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            min="1"
+          />
+        </div>
+      )}
 
       <button
         type="submit"

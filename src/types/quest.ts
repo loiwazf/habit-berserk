@@ -1,4 +1,4 @@
-export type QuestType = 'daily' | 'weekly' | 'custom'
+export type QuestType = 'daily' | 'weekly' | 'monthly' | 'custom'
 export type QuestStatus = 'active' | 'completed'
 
 export interface Quest {
@@ -17,4 +17,8 @@ export interface Quest {
   status: QuestStatus
   createdAt: string
   completedAt?: string
+  dueDate?: string
+  isPersistent?: boolean
+  completionCount?: number
+  maxCompletions?: number
 } 

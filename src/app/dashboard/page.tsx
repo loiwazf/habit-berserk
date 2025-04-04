@@ -4,9 +4,15 @@ import { useStore } from '@/stores/useStore'
 import QuestList from '@/components/QuestList'
 import CharacterStats from '@/components/CharacterStats'
 import QuestForm from '@/components/QuestForm'
+import { useEffect } from 'react'
 
 export default function DashboardPage() {
-  const { quests } = useStore()
+  const { quests, createDefaultQuests } = useStore()
+
+  // Initialize default quests on component mount
+  useEffect(() => {
+    createDefaultQuests()
+  }, [createDefaultQuests])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -25,7 +31,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Active Quests</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Quests</h2>
         <QuestList />
       </div>
     </div>
