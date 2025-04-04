@@ -9,6 +9,7 @@ export default function QuestCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [calendarDays, setCalendarDays] = useState<Date[]>([])
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
   
   useEffect(() => {
     generateCalendarDays()
@@ -71,6 +72,15 @@ export default function QuestCalendar() {
     })
   }
   
+  const formatFullDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+  
   const isToday = (date: Date) => {
     const today = new Date()
     return (
@@ -96,6 +106,11 @@ export default function QuestCalendar() {
     })
   }
   
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date)
+    setShowDetails(true)
+  }
+  
   const renderQuestItem = (quest: Quest) => {
     const isCompleted = quest.status === 'completed'
     const isFailed = quest.status === 'failed'
@@ -114,6 +129,54 @@ export default function QuestCalendar() {
         <div className="font-medium">{quest.title}</div>
         <div className="text-xs">
           {isCompleted ? 'Completed' : 'Failed'} • {quest.xpReward} XP
+        </div>
+      </div>
+    )
+  }
+  
+  const renderDetailedQuestItem = (quest: Quest) => {
+    const isCompleted = quest.status === 'completed'
+    const isFailed = quest.status === 'failed'
+    
+    return (
+      <div
+        key={quest.id}
+        className={`p-3 mb-2 rounded ${
+          isCompleted
+            ? 'bg-green-100 text-green-800'
+            : isFailed
+            ? 'bg-red-100 text-red-800'
+            : ''
+        }`}
+      >
+        <div className="font-medium text-base">{quest.title}</div>
+        <div className="text-sm mt-1">{quest.description}</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+            {quest.type.charAt(0).toUpperCase() + quest.type.slice(1)}
+          </span>
+          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+            {quest.xpReward} XP
+          </span>
+          {Object.entries(quest.statBoosts).map(([stat, value]) =>
+            value ? (
+              <span
+                key={stat}
+                className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs"
+              >
+                +{value} {stat.charAt(0).toUpperCase() + stat.slice(1)}
+              </span>
+            ) : null
+          )}
+          {quest.isPersistent && quest.maxCompletions && (
+            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+              Progress: {quest.completionCount || 0}/{quest.maxCompletions}
+            </span>
+          )}
+        </div>
+        <div className="mt-2 text-xs">
+          {isCompleted ? 'Completed' : 'Failed'} on{' '}
+          {new Date(quest.completedAt || quest.failedAt!).toLocaleTimeString()}
         </div>
       </div>
     )
@@ -156,14 +219,14 @@ export default function QuestCalendar() {
           return (
             <div
               key={index}
-              className={`min-h-[100px] p-2 border rounded ${
+              className={`min-h-[100px] p-2 border rounded cursor-pointer ${
                 isToday(date)
                   ? 'bg-blue-50 border-blue-200'
                   : !isCurrentMonth(date)
                   ? 'bg-gray-50 text-gray-400'
                   : 'bg-white'
-              } ${hasQuests ? 'cursor-pointer hover:bg-gray-50' : ''}`}
-              onClick={() => hasQuests && setSelectedDate(date)}
+              } ${hasQuests ? 'hover:bg-gray-50' : ''}`}
+              onClick={() => handleDayClick(date)}
             >
               <div className="text-sm font-medium mb-1">{date.getDate()}</div>
               {hasQuests && (
@@ -176,14 +239,27 @@ export default function QuestCalendar() {
         })}
       </div>
       
-      {selectedDate && (
+      {showDetails && selectedDate && (
         <div className="mt-4 p-4 bg-gray-50 rounded">
-          <h4 className="font-medium mb-2">
-            {formatDate(selectedDate)} - Quest Details
-          </h4>
-          <div className="space-y-2">
-            {getQuestsForDate(selectedDate).map(renderQuestItem)}
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="font-medium text-lg">
+              {formatFullDate(selectedDate)}
+            </h4>
+            <button 
+              onClick={() => setShowDetails(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
           </div>
+          
+          {getQuestsForDate(selectedDate).length > 0 ? (
+            <div className="space-y-2">
+              {getQuestsForDate(selectedDate).map(renderDetailedQuestItem)}
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">No quests completed or failed on this day.</p>
+          )}
         </div>
       )}
     </div>

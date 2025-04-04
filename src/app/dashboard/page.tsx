@@ -32,12 +32,15 @@ export default function DashboardPage() {
       </div>
       
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Quests</h2>
+        <h2 className="text-2xl font-semibold mb-4">Active Quests</h2>
         <QuestList />
       </div>
       
-      <div className="mt-8">
+      <div className="mt-12">
         <h2 className="text-2xl font-semibold mb-4">Quest History</h2>
+        <p className="text-gray-600 mb-4">
+          Click on any day in the calendar to view detailed information about completed and failed quests.
+        </p>
         <QuestCalendar />
       </div>
     </div>
