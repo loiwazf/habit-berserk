@@ -4,6 +4,12 @@
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
+  NEXT_PUBLIC_APP_URL = "https://habit-berserk.netlify.app"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs" 
+  package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 
