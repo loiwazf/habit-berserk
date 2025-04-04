@@ -7,6 +7,7 @@ interface Store {
   quests: Quest[]
   addQuest: (quest: Omit<Quest, 'id' | 'status' | 'createdAt' | 'completedAt'>) => void
   completeQuest: (id: string) => void
+  failQuest: (id: string) => void
   deleteQuest: (id: string) => void
   updateCharacter: (updates: Partial<Character>) => void
   createDefaultQuests: () => void
@@ -14,7 +15,38 @@ interface Store {
   getQuestsByType: (type: Quest['type']) => Quest[]
 }
 
-export const useStore = create<Store>((set, get) => ({
+// Load state from localStorage
+const loadState = () => {
+  if (typeof window === 'undefined') return { character: null, quests: [] }
+  
+  try {
+    const characterJson = localStorage.getItem('habit-berserk-character')
+    const questsJson = localStorage.getItem('habit-berserk-quests')
+    
+    return {
+      character: characterJson ? JSON.parse(characterJson) : null,
+      quests: questsJson ? JSON.parse(questsJson) : [],
+    }
+  } catch (error) {
+    console.error('Error loading state from localStorage:', error)
+    return { character: null, quests: [] }
+  }
+}
+
+// Save state to localStorage
+const saveState = (state: { character: Character; quests: Quest[] }) => {
+  if (typeof window === 'undefined') return
+  
+  try {
+    localStorage.setItem('habit-berserk-character', JSON.stringify(state.character))
+    localStorage.setItem('habit-berserk-quests', JSON.stringify(state.quests))
+  } catch (error) {
+    console.error('Error saving state to localStorage:', error)
+  }
+}
+
+// Initial state
+const initialState = {
   character: {
     level: 1,
     xp: 0,
@@ -30,18 +62,34 @@ export const useStore = create<Store>((set, get) => ({
     lastQuestCompleted: null,
   },
   quests: [],
+}
+
+// Load saved state or use initial state
+const savedState = loadState()
+const initialStoreState = {
+  character: savedState.character || initialState.character,
+  quests: savedState.quests || initialState.quests,
+}
+
+export const useStore = create<Store>((set, get) => ({
+  character: initialStoreState.character,
+  quests: initialStoreState.quests,
   addQuest: (quest) =>
-    set((state) => ({
-      quests: [
-        ...state.quests,
-        {
-          ...quest,
-          id: Math.random().toString(36).substr(2, 9),
-          status: 'active' as QuestStatus,
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    })),
+    set((state) => {
+      const newState = {
+        quests: [
+          ...state.quests,
+          {
+            ...quest,
+            id: Math.random().toString(36).substr(2, 9),
+            status: 'active' as QuestStatus,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      }
+      saveState({ character: state.character, quests: newState.quests })
+      return newState
+    }),
   completeQuest: (id) =>
     set((state) => {
       const quest = state.quests.find((q) => q.id === id)
@@ -54,7 +102,18 @@ export const useStore = create<Store>((set, get) => ({
         
         // If the quest has reached its max completions, mark it as completed
         if (completionCount >= maxCompletions) {
-          return {
+          // Calculate new XP and level
+          const newXp = state.character.xp + quest.xpReward
+          let newLevel = state.character.level
+          let newXpToNextLevel = state.character.xpToNextLevel
+          
+          // Handle multiple level-ups if needed
+          while (newXp >= newXpToNextLevel) {
+            newLevel += 1
+            newXpToNextLevel = newLevel * 100
+          }
+          
+          const newState = {
             quests: state.quests.map((q) =>
               q.id === id
                 ? {
@@ -67,7 +126,9 @@ export const useStore = create<Store>((set, get) => ({
             ),
             character: {
               ...state.character,
-              xp: state.character.xp + quest.xpReward,
+              level: newLevel,
+              xp: newXp,
+              xpToNextLevel: newXpToNextLevel,
               stats: {
                 strength: state.character.stats.strength + (quest.statBoosts.strength || 0),
                 intelligence: state.character.stats.intelligence + (quest.statBoosts.intelligence || 0),
@@ -79,10 +140,12 @@ export const useStore = create<Store>((set, get) => ({
               lastQuestCompleted: new Date().toISOString(),
             },
           }
+          saveState(newState)
+          return newState
         }
         
         // Otherwise, just update the completion count
-        return {
+        const newState = {
           quests: state.quests.map((q) =>
             q.id === id
               ? {
@@ -105,15 +168,20 @@ export const useStore = create<Store>((set, get) => ({
             lastQuestCompleted: new Date().toISOString(),
           },
         }
+        saveState(newState)
+        return newState
       }
 
       // Handle regular quests
       const newXp = state.character.xp + quest.xpReward
-      const newLevel =
-        newXp >= state.character.xpToNextLevel
-          ? state.character.level + 1
-          : state.character.level
-      const newXpToNextLevel = newLevel * 100
+      let newLevel = state.character.level
+      let newXpToNextLevel = state.character.xpToNextLevel
+      
+      // Handle multiple level-ups if needed
+      while (newXp >= newXpToNextLevel) {
+        newLevel += 1
+        newXpToNextLevel = newLevel * 100
+      }
 
       const newStats = {
         strength: state.character.stats.strength + (quest.statBoosts.strength || 0),
@@ -132,7 +200,7 @@ export const useStore = create<Store>((set, get) => ({
           : 1
         : 1
 
-      return {
+      const newState = {
         quests: state.quests.map((q) =>
           q.id === id
             ? {
@@ -152,15 +220,48 @@ export const useStore = create<Store>((set, get) => ({
           lastQuestCompleted,
         },
       }
+      saveState(newState)
+      return newState
+    }),
+  failQuest: (id) =>
+    set((state) => {
+      const quest = state.quests.find((q) => q.id === id)
+      if (!quest) return state
+
+      const newState = {
+        quests: state.quests.map((q) =>
+          q.id === id
+            ? {
+                ...q,
+                status: 'failed' as QuestStatus,
+                failedAt: new Date().toISOString(),
+              }
+            : q
+        ),
+        character: {
+          ...state.character,
+          streak: 0,
+        },
+      }
+      saveState(newState)
+      return newState
     }),
   deleteQuest: (id) =>
-    set((state) => ({
-      quests: state.quests.filter((q) => q.id !== id),
-    })),
+    set((state) => {
+      const newState = {
+        quests: state.quests.filter((q) => q.id !== id),
+      }
+      saveState({ character: state.character, quests: newState.quests })
+      return newState
+    }),
   updateCharacter: (updates) =>
-    set((state) => ({
-      character: { ...state.character, ...updates },
-    })),
+    set((state) => {
+      const newState = {
+        character: { ...state.character, ...updates },
+      }
+      saveState({ character: newState.character, quests: state.quests })
+      return newState
+    }),
   createDefaultQuests: () => {
     const state = get()
     
@@ -235,42 +336,51 @@ export const useStore = create<Store>((set, get) => ({
     }
     
     // Add all default quests
-    set((state) => ({
-      quests: [
-        ...state.quests,
-        ...defaultDailyQuests.map(quest => ({
-          ...quest,
-          id: Math.random().toString(36).substr(2, 9),
-          status: 'active' as QuestStatus,
-          createdAt: new Date().toISOString(),
-        })),
-        {
-          ...defaultWeeklyQuest,
-          id: Math.random().toString(36).substr(2, 9),
-          status: 'active' as QuestStatus,
-          createdAt: new Date().toISOString(),
-        },
-      ],
-    }))
+    set((state) => {
+      const newState = {
+        quests: [
+          ...state.quests,
+          ...defaultDailyQuests.map(quest => ({
+            ...quest,
+            id: Math.random().toString(36).substr(2, 9),
+            status: 'active' as QuestStatus,
+            createdAt: new Date().toISOString(),
+          })),
+          {
+            ...defaultWeeklyQuest,
+            id: Math.random().toString(36).substr(2, 9),
+            status: 'active' as QuestStatus,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      }
+      saveState({ character: state.character, quests: newState.quests })
+      return newState
+    })
   },
   refreshDailyQuests: () => {
     const state = get()
     const today = new Date().toISOString().split('T')[0]
     
     // Reset daily quests
-    set((state) => ({
-      quests: state.quests.map(quest => {
-        if (quest.type === 'daily' && quest.isPersistent) {
-          return {
-            ...quest,
-            status: 'active' as QuestStatus,
-            completionCount: 0,
-            completedAt: undefined,
+    set((state) => {
+      const newState = {
+        quests: state.quests.map(quest => {
+          if (quest.type === 'daily' && quest.isPersistent) {
+            return {
+              ...quest,
+              status: 'active' as QuestStatus,
+              completionCount: 0,
+              completedAt: undefined,
+              failedAt: undefined,
+            }
           }
-        }
-        return quest
-      }),
-    }))
+          return quest
+        }),
+      }
+      saveState({ character: state.character, quests: newState.quests })
+      return newState
+    })
   },
   getQuestsByType: (type) => {
     const state = get()

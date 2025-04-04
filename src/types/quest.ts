@@ -1,5 +1,5 @@
 export type QuestType = 'daily' | 'weekly' | 'monthly' | 'custom'
-export type QuestStatus = 'active' | 'completed'
+export type QuestStatus = 'active' | 'completed' | 'failed'
 
 export interface Quest {
   id: string
@@ -17,6 +17,7 @@ export interface Quest {
   status: QuestStatus
   createdAt: string
   completedAt?: string
+  failedAt?: string
   dueDate?: string
   isPersistent?: boolean
   completionCount?: number
