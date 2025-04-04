@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Active Quests</h2>
-        <QuestList quests={quests} />
+        <QuestList />
       </div>
     </div>
   )

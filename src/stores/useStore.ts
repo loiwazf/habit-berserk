@@ -5,7 +5,7 @@ import { Quest } from '@/types/quest'
 interface Store {
   character: Character
   quests: Quest[]
-  addQuest: (quest: Omit<Quest, 'id' | 'status'>) => void
+  addQuest: (quest: Omit<Quest, 'id' | 'status' | 'createdAt' | 'completedAt'>) => void
   completeQuest: (id: string) => void
   deleteQuest: (id: string) => void
   updateCharacter: (updates: Partial<Character>) => void
@@ -33,6 +33,7 @@ export const useStore = create<Store>((set) => ({
           ...quest,
           id: Math.random().toString(36).substr(2, 9),
           status: 'active',
+          createdAt: new Date().toISOString(),
         },
       ],
     })),
@@ -65,7 +66,13 @@ export const useStore = create<Store>((set) => ({
 
       return {
         quests: state.quests.map((q) =>
-          q.id === id ? { ...q, status: 'completed' } : q
+          q.id === id
+            ? {
+                ...q,
+                status: 'completed',
+                completedAt: new Date().toISOString(),
+              }
+            : q
         ),
         character: {
           ...state.character,

@@ -13,6 +13,6 @@ export interface Quest {
     agility: number
   }
   status: QuestStatus
-  createdAt: Date
-  completedAt?: Date
+  createdAt: string
+  completedAt?: string
 } 
