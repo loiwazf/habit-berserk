@@ -94,8 +94,8 @@ export const useStore = create<Store>((set, get) => ({
         id: Math.random().toString(36).substr(2, 9),
         status: 'active' as QuestStatus,
         createdAt: new Date().toISOString(),
-        completedInstances: [],
-        failedInstances: [],
+        completedInstances: quest.completedInstances || [],
+        failedInstances: quest.failedInstances || [],
         xp: quest.xpReward || 0,
       }
       
@@ -120,7 +120,7 @@ export const useStore = create<Store>((set, get) => ({
         if (q.id === questId) {
           return {
             ...q,
-            completedInstances: [...q.completedInstances, newInstance]
+            completedInstances: [...(q.completedInstances || []), newInstance]
           }
         }
         return q
@@ -213,7 +213,7 @@ export const useStore = create<Store>((set, get) => ({
         if (q.id === questId) {
       return {
             ...q,
-            failedInstances: [...q.failedInstances, newInstance]
+            failedInstances: [...(q.failedInstances || []), newInstance]
           }
         }
         return q
