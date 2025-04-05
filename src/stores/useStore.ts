@@ -376,10 +376,10 @@ export const useStore = create<Store>((set, get) => ({
         if (quest.type === 'daily') {
           return {
             ...quest,
-            completedInstances: quest.completedInstances.filter(
+            completedInstances: (quest.completedInstances || []).filter(
               instance => new Date(instance.date).toDateString() !== new Date().toDateString()
             ),
-            failedInstances: quest.failedInstances.filter(
+            failedInstances: (quest.failedInstances || []).filter(
               instance => new Date(instance.date).toDateString() !== new Date().toDateString()
             )
           }
