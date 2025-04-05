@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // output: 'export', // Commenting out static export
+  output: 'export', // Enable static export
   images: {
     unoptimized: true,
     domains: ['habit-berserk.netlify.app'],
