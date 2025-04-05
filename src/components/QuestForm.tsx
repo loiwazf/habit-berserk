@@ -11,6 +11,7 @@ export default function QuestForm() {
     description: '',
     type: 'daily' as QuestType,
     xpReward: 50,
+    xp: 50,
     statBoosts: {
       strength: 0,
       intelligence: 0,
@@ -18,29 +19,41 @@ export default function QuestForm() {
       wisdom: 0,
       spirit: 0,
     },
-    dueDate: '',
     isPersistent: false,
+    completionCount: 0,
     maxCompletions: 1,
+    completedInstances: [],
+    failedInstances: [],
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    addQuest({
+    
+    // Create a new quest object with the correct type
+    const newQuest = {
       title: formData.title,
       description: formData.description,
-      type: formData.type,
+      type: formData.type as QuestType,
       xpReward: formData.xpReward,
+      xp: formData.xp,
       statBoosts: formData.statBoosts,
-      dueDate: formData.dueDate || undefined,
       isPersistent: formData.isPersistent,
+      completionCount: formData.completionCount,
       maxCompletions: formData.maxCompletions,
-    })
+      completedInstances: formData.completedInstances,
+      failedInstances: formData.failedInstances,
+    }
+    
+    // Add the quest to the store
+    addQuest(newQuest)
+    
     // Reset form
     setFormData({
       title: '',
       description: '',
       type: 'daily',
       xpReward: 50,
+      xp: 50,
       statBoosts: {
         strength: 0,
         intelligence: 0,
@@ -48,9 +61,11 @@ export default function QuestForm() {
         wisdom: 0,
         spirit: 0,
       },
-      dueDate: '',
       isPersistent: false,
+      completionCount: 0,
       maxCompletions: 1,
+      completedInstances: [],
+      failedInstances: [],
     })
   }
 
@@ -120,7 +135,14 @@ export default function QuestForm() {
           type="number"
           id="xpReward"
           value={formData.xpReward}
-          onChange={(e) => setFormData({ ...formData, xpReward: Number(e.target.value) })}
+          onChange={(e) => {
+            const value = Number(e.target.value)
+            setFormData({ 
+              ...formData, 
+              xpReward: value,
+              xp: value 
+            })
+          }}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           min="1"
           required
@@ -256,60 +278,43 @@ export default function QuestForm() {
 
       <div>
         <label
-          htmlFor="dueDate"
+          htmlFor="isPersistent"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Due Date
+          Persistent Quest
         </label>
-        <input
-          type="date"
-          id="dueDate"
-          value={formData.dueDate}
-          onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        />
-      </div>
-
-      <div className="flex items-center">
         <input
           type="checkbox"
           id="isPersistent"
           checked={formData.isPersistent}
           onChange={(e) => setFormData({ ...formData, isPersistent: e.target.checked })}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="mt-1 block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
-        <label
-          htmlFor="isPersistent"
-          className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
-        >
-          Persistent Quest
-        </label>
       </div>
 
-      {formData.isPersistent && (
-        <div>
-          <label
-            htmlFor="maxCompletions"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Max Completions
-          </label>
-          <input
-            type="number"
-            id="maxCompletions"
-            value={formData.maxCompletions}
-            onChange={(e) => setFormData({ ...formData, maxCompletions: Number(e.target.value) })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-            min="1"
-          />
-        </div>
-      )}
+      <div>
+        <label
+          htmlFor="maxCompletions"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Maximum Completions
+        </label>
+        <input
+          type="number"
+          id="maxCompletions"
+          value={formData.maxCompletions}
+          onChange={(e) => setFormData({ ...formData, maxCompletions: Number(e.target.value) })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+          min="1"
+          required
+        />
+      </div>
 
       <button
         type="submit"
-        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600"
       >
-        Create Quest
+        Add Quest
       </button>
     </form>
   )
