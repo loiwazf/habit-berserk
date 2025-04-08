@@ -1,16 +1,15 @@
 import NextAuth from "next-auth"
-import GithubProvider from "next-auth/providers/github"
 import GoogleProvider from "next-auth/providers/google"
+
+if (!process.env.GOOGLE_ID || !process.env.GOOGLE_SECRET) {
+  console.warn('Google OAuth credentials are not configured')
+}
 
 const handler = NextAuth({
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_ID as string,
-      clientSecret: process.env.GITHUB_SECRET as string,
-    }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_ID as string,
-      clientSecret: process.env.GOOGLE_SECRET as string,
+      clientId: process.env.GOOGLE_ID || '',
+      clientSecret: process.env.GOOGLE_SECRET || '',
     }),
   ],
   callbacks: {
@@ -24,6 +23,7 @@ const handler = NextAuth({
   pages: {
     signIn: '/auth/signin',
   },
+  debug: process.env.NODE_ENV === 'development',
 })
 
 export { handler as GET, handler as POST } 

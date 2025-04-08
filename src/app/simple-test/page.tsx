@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useStore } from '@/stores/useStore'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 interface LocalStorageData {
   character: any;
@@ -9,10 +11,19 @@ interface LocalStorageData {
 }
 
 export default function SimpleTest() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const { character, quests, updateCharacter, addQuest } = useStore()
   const [localStorageData, setLocalStorageData] = useState<LocalStorageData | null>(null)
   const [error, setError] = useState<string>('')
   const [isClient, setIsClient] = useState(false)
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    }
+  }, [status, router])
 
   // Set isClient to true after component mounts
   useEffect(() => {
@@ -22,8 +33,8 @@ export default function SimpleTest() {
   // Load localStorage data on component mount
   useEffect(() => {
     try {
-      const characterData = localStorage.getItem('habit-berserk-character')
-      const questsData = localStorage.getItem('habit-berserk-quests')
+      const characterData = localStorage.getItem(`habit-berserk-character-${session?.user?.id}`)
+      const questsData = localStorage.getItem(`habit-berserk-quests-${session?.user?.id}`)
       
       setLocalStorageData({
         character: characterData ? JSON.parse(characterData) : null,
@@ -32,7 +43,7 @@ export default function SimpleTest() {
     } catch (err) {
       setError(`Error reading from localStorage: ${err}`)
     }
-  }, [])
+  }, [session?.user?.id])
 
   const handleUpdateCharacter = () => {
     try {
@@ -44,8 +55,8 @@ export default function SimpleTest() {
       updateCharacter(updatedCharacter)
       
       // Update localStorage data
-      const characterData = localStorage.getItem('habit-berserk-character')
-      const questsData = localStorage.getItem('habit-berserk-quests')
+      const characterData = localStorage.getItem(`habit-berserk-character-${session?.user?.id}`)
+      const questsData = localStorage.getItem(`habit-berserk-quests-${session?.user?.id}`)
       
       setLocalStorageData((prev: LocalStorageData | null) => {
         if (!prev) return null;
@@ -72,15 +83,12 @@ export default function SimpleTest() {
         xp: 50,
         statBoosts: { strength: 1 },
         isPersistent: false,
-        completionCount: 0,
-        maxCompletions: 1,
-        completedInstances: [],
-        failedInstances: []
+        maxCompletions: 1
       })
       
       // Update localStorage data
-      const characterData = localStorage.getItem('habit-berserk-character')
-      const questsData = localStorage.getItem('habit-berserk-quests')
+      const characterData = localStorage.getItem(`habit-berserk-character-${session?.user?.id}`)
+      const questsData = localStorage.getItem(`habit-berserk-quests-${session?.user?.id}`)
       
       setLocalStorageData((prev: LocalStorageData | null) => {
         if (!prev) return null;
@@ -98,7 +106,7 @@ export default function SimpleTest() {
 
   const handleClearLocalStorage = () => {
     try {
-      localStorage.clear()
+      useStore.getState().clearCache()
       setLocalStorageData({
         character: null,
         quests: null
@@ -111,6 +119,18 @@ export default function SimpleTest() {
 
   const handleReloadPage = () => {
     window.location.reload()
+  }
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <h1 className="text-4xl font-bold text-blue-600 mb-8">Simple Test Page</h1>
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   // Only render the full content after client-side hydration is complete

@@ -3,35 +3,45 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/stores/useStore'
 import TestNavigation from '@/components/TestNavigation'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function TestStore() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const { character, quests, updateCharacter, addQuest } = useStore()
   const [testValue, setTestValue] = useState<string>('')
-  const [error, setError] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
   const [storeUpdates, setStoreUpdates] = useState<number>(0)
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    }
+  }, [status, router])
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return <div>Loading...</div>
+  }
 
   // Force a re-render when the store updates
   useEffect(() => {
-    const unsubscribe = useStore.subscribe(
-      (state) => {
-        console.log('Store updated:', state)
-        setStoreUpdates(prev => prev + 1)
-      }
-    )
-    
-    return () => unsubscribe()
-  }, [])
+    setStoreUpdates(prev => prev + 1)
+  }, [character, quests])
 
   const handleUpdateCharacter = () => {
     try {
       // Update the character's strength
       updateCharacter({
+        ...character,
         stats: {
           ...character.stats,
           strength: character.stats.strength + 1
         }
       })
-      setError('')
+      setError(null)
     } catch (err) {
       setError(`Error updating character: ${err}`)
     }
@@ -41,19 +51,23 @@ export default function TestStore() {
     try {
       // Add a new quest
       addQuest({
-        title: `Test Quest ${new Date().toISOString()}`,
+        title: testValue || 'Test Quest',
         description: 'This is a test quest',
         type: 'custom',
         xpReward: 50,
         xp: 50,
-        statBoosts: { strength: 1 },
+        statBoosts: {
+          strength: 1,
+          intelligence: 0,
+          skill: 0,
+          wisdom: 0,
+          spirit: 0
+        },
         isPersistent: false,
-        completionCount: 0,
-        maxCompletions: 1,
-        completedInstances: [],
-        failedInstances: []
+        maxCompletions: 1
       })
-      setError('')
+      setTestValue('')
+      setError(null)
     } catch (err) {
       setError(`Error adding quest: ${err}`)
     }

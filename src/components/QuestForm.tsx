@@ -6,11 +6,11 @@ import { QuestType } from '@/types/quest'
 
 export default function QuestForm() {
   const { addQuest } = useStore()
-  const [isFormVisible, setIsFormVisible] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState<QuestType>('custom')
   const [xpReward, setXpReward] = useState(50)
+  const [showForm, setShowForm] = useState(false)
   const [statBoosts, setStatBoosts] = useState({
     strength: 0,
     intelligence: 0,
@@ -25,17 +25,14 @@ export default function QuestForm() {
     if (!title.trim()) return
     
     addQuest({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       type,
       xpReward,
       xp: xpReward,
       statBoosts,
       isPersistent: false,
-      completionCount: 0,
-      maxCompletions: 1,
-      completedInstances: [],
-      failedInstances: []
+      maxCompletions: 1
     })
     
     // Reset form
@@ -50,162 +47,175 @@ export default function QuestForm() {
       wisdom: 0,
       spirit: 0
     })
-    
-    // Hide form after submission
-    setIsFormVisible(false)
+    setShowForm(false)
   }
 
-  const toggleForm = () => {
-    setIsFormVisible(!isFormVisible)
+  if (!showForm) {
+    return (
+      <button
+        onClick={() => setShowForm(true)}
+        className="w-full px-4 py-2 accent-bg text-white rounded accent-hover"
+      >
+        ➕ Add New Quest
+      </button>
+    )
   }
 
   return (
-    <div className="mt-6">
-      <button
-        onClick={toggleForm}
-        className="w-full px-4 py-2 accent-bg text-white rounded accent-hover mb-4"
-      >
-        {isFormVisible ? 'Hide Add Quest Form' : 'Add New Quest'}
-      </button>
-      
-      {isFormVisible && (
-        <div className="bg-white rounded-lg shadow-md p-6 border-2 border-gray-200">
-          <h2 className="text-xl font-bold mb-4 accent-color">Create New Quest</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                Quest Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                placeholder="Enter quest title"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                placeholder="Enter quest description"
-                rows={3}
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                Quest Type
-              </label>
-              <select
-                id="type"
-                value={type}
-                onChange={(e) => setType(e.target.value as QuestType)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            
-            <div>
-              <label htmlFor="xpReward" className="block text-sm font-medium text-gray-700 mb-1">
-                XP Reward
-              </label>
-              <input
-                type="number"
-                id="xpReward"
-                value={xpReward}
-                onChange={(e) => setXpReward(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                min="0"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stat Boosts
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                <div>
-                  <label htmlFor="strength" className="block text-xs text-gray-600">Strength</label>
-                  <input
-                    type="number"
-                    id="strength"
-                    value={statBoosts.strength}
-                    onChange={(e) => setStatBoosts({...statBoosts, strength: parseInt(e.target.value) || 0})}
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="intelligence" className="block text-xs text-gray-600">Intelligence</label>
-                  <input
-                    type="number"
-                    id="intelligence"
-                    value={statBoosts.intelligence}
-                    onChange={(e) => setStatBoosts({...statBoosts, intelligence: parseInt(e.target.value) || 0})}
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="skill" className="block text-xs text-gray-600">Skill</label>
-                  <input
-                    type="number"
-                    id="skill"
-                    value={statBoosts.skill}
-                    onChange={(e) => setStatBoosts({...statBoosts, skill: parseInt(e.target.value) || 0})}
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="wisdom" className="block text-xs text-gray-600">Wisdom</label>
-                  <input
-                    type="number"
-                    id="wisdom"
-                    value={statBoosts.wisdom}
-                    onChange={(e) => setStatBoosts({...statBoosts, wisdom: parseInt(e.target.value) || 0})}
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="spirit" className="block text-xs text-gray-600">Spirit</label>
-                  <input
-                    type="number"
-                    id="spirit"
-                    value={statBoosts.spirit}
-                    onChange={(e) => setStatBoosts({...statBoosts, spirit: parseInt(e.target.value) || 0})}
-                    className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                    min="0"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-4">
-              <button
-                type="submit"
-                className="w-full px-4 py-2 accent-bg text-white rounded accent-hover"
-              >
-                Create Quest
-              </button>
-            </div>
-          </form>
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg">
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Title
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Enter quest title"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Description
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          placeholder="Enter quest description"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Type
+        </label>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as QuestType)}
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          XP Reward
+        </label>
+        <input
+          type="number"
+          value={xpReward}
+          onChange={(e) => setXpReward(Number(e.target.value))}
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          min="0"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Stat Boosts
+        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-gray-700 text-sm mb-1">Strength</label>
+            <input
+              type="number"
+              value={statBoosts.strength}
+              onChange={(e) =>
+                setStatBoosts((prev) => ({
+                  ...prev,
+                  strength: Number(e.target.value)
+                }))
+              }
+              className="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm mb-1">
+              Intelligence
+            </label>
+            <input
+              type="number"
+              value={statBoosts.intelligence}
+              onChange={(e) =>
+                setStatBoosts((prev) => ({
+                  ...prev,
+                  intelligence: Number(e.target.value)
+                }))
+              }
+              className="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm mb-1">Skill</label>
+            <input
+              type="number"
+              value={statBoosts.skill}
+              onChange={(e) =>
+                setStatBoosts((prev) => ({
+                  ...prev,
+                  skill: Number(e.target.value)
+                }))
+              }
+              className="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm mb-1">Wisdom</label>
+            <input
+              type="number"
+              value={statBoosts.wisdom}
+              onChange={(e) =>
+                setStatBoosts((prev) => ({
+                  ...prev,
+                  wisdom: Number(e.target.value)
+                }))
+              }
+              className="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 text-sm mb-1">Spirit</label>
+            <input
+              type="number"
+              value={statBoosts.spirit}
+              onChange={(e) =>
+                setStatBoosts((prev) => ({
+                  ...prev,
+                  spirit: Number(e.target.value)
+                }))
+              }
+              className="shadow appearance-none border rounded w-full py-1 px-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              min="0"
+            />
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <button
+          type="button"
+          onClick={() => setShowForm(false)}
+          className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 accent-bg text-white rounded accent-hover"
+        >
+          Add Quest
+        </button>
+      </div>
+    </form>
   )
 } 

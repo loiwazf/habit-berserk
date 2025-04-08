@@ -6,13 +6,24 @@ import QuestList from '@/components/QuestList'
 import CharacterStats from '@/components/CharacterStats'
 import QuestForm from '@/components/QuestForm'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
-  const { quests, createDefaultQuests, refreshDailyQuests, resetState, character, forceRefreshDailyQuests } = useStore()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const { quests, refreshDailyQuests, resetProgress, character, forceRefreshDailyQuests } = useStore()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [showDebug, setShowDebug] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+    }
+  }, [status, router])
 
   // Set isClient to true after component mounts
   useEffect(() => {
@@ -29,17 +40,6 @@ export default function DashboardPage() {
       // Check if running in development mode
       console.log('Environment:', process.env.NODE_ENV)
       console.log('Is development mode:', process.env.NODE_ENV === 'development')
-      
-      // Check localStorage directly
-      try {
-        const storedCharacter = localStorage.getItem('habit-berserk-character')
-        const storedQuests = localStorage.getItem('habit-berserk-quests')
-        console.log('Stored character:', storedCharacter ? JSON.parse(storedCharacter) : 'Not found')
-        console.log('Stored quests:', storedQuests ? JSON.parse(storedQuests) : 'Not found')
-      } catch (error) {
-        console.error('Error reading from localStorage:', error)
-        setError(`Error reading from localStorage: ${error}`)
-      }
     } catch (error) {
       console.error('Error in dashboard initialization:', error)
       setError(`Error in dashboard initialization: ${error}`)
@@ -48,9 +48,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
-      // Create default quests if they don't exist
-      createDefaultQuests()
-      
       // Refresh daily quests to reset completion status for the new day
       refreshDailyQuests()
       
@@ -71,7 +68,7 @@ export default function DashboardPage() {
       console.error('Error in quest initialization:', error)
       setError(`Error in quest initialization: ${error}`)
     }
-  }, [createDefaultQuests, refreshDailyQuests])
+  }, [refreshDailyQuests])
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
@@ -80,7 +77,7 @@ export default function DashboardPage() {
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
       try {
-        resetState()
+        resetProgress()
         // Force a page reload to ensure all components are re-rendered
         window.location.reload()
       } catch (error) {
@@ -106,8 +103,7 @@ export default function DashboardPage() {
   const handleClearCache = () => {
     if (window.confirm('Are you sure you want to clear all data and reload the page? This will reset everything.')) {
       try {
-        // Clear all localStorage
-        localStorage.clear()
+        useStore.getState().clearCache()
         // Force a page reload
         window.location.reload()
       } catch (error) {
@@ -117,25 +113,20 @@ export default function DashboardPage() {
     }
   }
 
-  const handleForceUpdate = () => {
-    try {
-      // Force a state update by updating the character
-      const updatedCharacter = { ...character }
-      updatedCharacter.stats = { ...character.stats }
-      // Increment one stat to force a change
-      updatedCharacter.stats.strength += 1
-      useStore.getState().updateCharacter(updatedCharacter)
-      
-      // Force a page reload
-      window.location.reload()
-    } catch (error) {
-      console.error('Error forcing update:', error)
-      setError(`Error forcing update: ${error}`)
-    }
-  }
-
   const toggleDebug = () => {
     setShowDebug(!showDebug)
+  }
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <h1 className="text-4xl font-bold text-blue-600 mb-8">Dashboard</h1>
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   // Only render the full content after client-side hydration is complete
@@ -208,12 +199,6 @@ export default function DashboardPage() {
               className="w-full px-4 py-2 accent-bg text-white rounded accent-hover"
             >
               Clear Cache
-            </button>
-            <button
-              onClick={handleForceUpdate}
-              className="w-full px-4 py-2 accent-bg text-white rounded accent-hover"
-            >
-              Force Update
             </button>
           </div>
         </div>
