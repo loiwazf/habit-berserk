@@ -10,7 +10,7 @@ export interface Character {
   level: number
   xp: number
   xpToNextLevel: number
+  lastQuestCompleted: string | null
   stats: CharacterStats
   streak: number
-  lastQuestCompleted: string | null
 } 

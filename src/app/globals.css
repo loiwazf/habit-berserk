@@ -4,8 +4,8 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
+  --background-rgb: 212, 200, 200; /* #d4c8c8 */
+  --accent-rgb: 192, 32, 38; /* #c02026 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,7 +18,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
   min-height: 100vh;
 }
 
@@ -47,4 +47,20 @@ body {
   .card {
     @apply bg-white dark:bg-dark rounded-lg shadow-md p-4;
   }
+}
+
+.accent-color {
+  color: rgb(var(--accent-rgb));
+}
+
+.accent-bg {
+  background-color: rgb(var(--accent-rgb));
+}
+
+.accent-border {
+  border-color: rgb(var(--accent-rgb));
+}
+
+.accent-hover:hover {
+  background-color: rgba(var(--accent-rgb), 0.8);
 }

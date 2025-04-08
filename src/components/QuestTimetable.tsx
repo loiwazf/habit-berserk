@@ -40,19 +40,17 @@ export default function QuestTimetable() {
       if (quest.type !== 'daily') return false
       
       // For completed quests, check the completion date
-      if (quest.status === 'completed' && quest.completedAt) {
-        const completedDate = new Date(quest.completedAt).toISOString().split('T')[0]
-        return completedDate === dateString
+      if (quest.status === 'completed' && quest.completedInstances.length > 0) {
+        // Check if any of the completed instances match the date
+        return quest.completedInstances.some(instance => {
+          const completedDate = new Date(instance.date).toISOString().split('T')[0]
+          return completedDate === dateString
+        })
       }
       
       // For active quests, check if they're due on this date
       if (quest.status === 'active') {
-        if (quest.dueDate) {
-          const dueDate = new Date(quest.dueDate).toISOString().split('T')[0]
-          return dueDate === dateString
-        }
-        
-        // If no due date, check if it's a persistent quest for today
+        // If it's a persistent quest for today
         if (quest.isPersistent) {
           const today = new Date().toISOString().split('T')[0]
           return dateString === today
@@ -98,41 +96,28 @@ export default function QuestTimetable() {
       <div className="flex justify-between items-start">
         <div>
           <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{quest.title}</h4>
-          <p className="text-xs text-gray-600 dark:text-gray-300">{quest.description}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{quest.description}</p>
         </div>
-        <div className="flex gap-1">
-          {quest.status === 'active' && (
+        <div className="flex items-center">
+          <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mr-2">
+            +{quest.xpReward} XP
+          </span>
+          {quest.status === 'completed' ? (
             <button
-              onClick={() => completeQuest(quest.id)}
-              className="p-1 text-xs text-white bg-green-500 rounded hover:bg-green-600"
-              title="Complete"
+              onClick={() => deleteQuest(quest.id)}
+              className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
             >
-              ✓
+              Delete
+            </button>
+          ) : (
+            <button
+              onClick={() => completeQuest(quest.id, new Date())}
+              className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+            >
+              Complete
             </button>
           )}
-          <button
-            onClick={() => deleteQuest(quest.id)}
-            className="p-1 text-xs text-white bg-red-500 rounded hover:bg-red-600"
-            title="Delete"
-          >
-            ×
-          </button>
         </div>
-      </div>
-      <div className="mt-1 flex flex-wrap gap-1">
-        <span className="px-1 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-          {quest.xpReward} XP
-        </span>
-        {Object.entries(quest.statBoosts).map(([stat, value]) => 
-          value ? (
-            <span 
-              key={stat}
-              className="px-1 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-            >
-              +{value} {stat.charAt(0).toUpperCase() + stat.slice(1)}
-            </span>
-          ) : null
-        )}
       </div>
     </div>
   )
@@ -140,21 +125,29 @@ export default function QuestTimetable() {
   // Render a day column
   const renderDayColumn = (date: Date, isPast: boolean) => {
     const questsForDate = getQuestsForDate(date)
-    const isToday = new Date().toISOString().split('T')[0] === date.toISOString().split('T')[0]
+    const isToday = new Date().toDateString() === date.toDateString()
     
     return (
-      <div 
+      <div
         key={date.toISOString()}
-        className={`flex flex-col ${isPast ? 'mr-4' : 'ml-4'}`}
+        className={`flex flex-col ${
+          isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+        } rounded-lg p-2`}
       >
-        <div className={`text-center font-semibold mb-2 ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
-          {formatDate(date)}
+        <div className="text-center mb-2">
+          <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            {formatDate(date)}
+          </div>
+          <div className="text-sm font-bold text-gray-900 dark:text-white">
+            {date.getDate()}
+          </div>
         </div>
-        <div className="w-48 border-t border-gray-200 dark:border-gray-700 pt-2">
+        
+        <div className="flex-1">
           {questsForDate.length > 0 ? (
             questsForDate.map(renderQuestItem)
           ) : (
-            <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-2">
+            <div className="text-center text-xs text-gray-400 dark:text-gray-500 py-2">
               No quests
             </div>
           )}
@@ -164,36 +157,15 @@ export default function QuestTimetable() {
   }
   
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Quest Timeline</h3>
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-4">
+      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+        Quest Timetable
+      </h2>
       
-      <div className="flex overflow-x-auto pb-4">
-        <div className="flex flex-col">
-          <div className="text-center font-semibold mb-2 text-gray-700 dark:text-gray-300">Past</div>
-          <div className="flex flex-row-reverse">
-            {pastDays.map(date => renderDayColumn(date, true))}
-          </div>
-        </div>
-        
-        <div className="flex flex-col mx-4">
-          <div className="text-center font-semibold mb-2 text-blue-600 dark:text-blue-400">Today</div>
-          <div className="w-48 border-t border-gray-200 dark:border-gray-700 pt-2">
-            {getQuestsForDate(new Date()).length > 0 ? (
-              getQuestsForDate(new Date()).map(renderQuestItem)
-            ) : (
-              <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-2">
-                No quests
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="flex flex-col">
-          <div className="text-center font-semibold mb-2 text-gray-700 dark:text-gray-300">Future</div>
-          <div className="flex flex-row">
-            {futureDays.map(date => renderDayColumn(date, false))}
-          </div>
-        </div>
+      <div className="grid grid-cols-15 gap-2">
+        {pastDays.map(date => renderDayColumn(date, true))}
+        {renderDayColumn(selectedDate, false)}
+        {futureDays.map(date => renderDayColumn(date, false))}
       </div>
     </div>
   )
