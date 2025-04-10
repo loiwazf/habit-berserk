@@ -13,17 +13,31 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub as string
+    async signIn({ user, account, profile }) {
+      console.log('SignIn callback:', { user, account, profile })
+      return true
+    },
+    async session({ session, token, user }) {
+      console.log('Session callback:', { session, token, user })
+      if (session.user && session.user.email) {
+        // Use the email as a unique identifier since it's guaranteed to be unique
+        session.user.id = session.user.email
+        console.log('Set user ID in session:', session.user.id)
       }
       return session
     },
+    async jwt({ token, user, account, profile }) {
+      console.log('JWT callback:', { token, user, account, profile })
+      if (user && user.email) {
+        token.sub = user.email
+      }
+      return token
+    }
   },
   pages: {
     signIn: '/auth/signin',
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: true,
 })
 
 export { handler as GET, handler as POST } 

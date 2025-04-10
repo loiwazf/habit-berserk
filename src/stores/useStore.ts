@@ -8,7 +8,7 @@ export interface Store {
   character: Character
   quests: Quest[]
   isInitialized: boolean
-  initialize: () => void
+  initialize: (userId: string) => void
   saveState: () => void
   updateCharacter: (character: Character) => void
   addXP: (amount: number) => void
@@ -48,13 +48,22 @@ const loadState = (userId: string | null) => {
   if (typeof window === 'undefined') return { character: null, quests: [] }
   
   try {
+    console.log('Loading state for user:', userId)
+    if (!userId) {
+      console.error('No user ID provided for loading state')
+      return { character: null, quests: [] }
+    }
+
     const characterJson = localStorage.getItem(`habit-berserk-character-${userId}`)
     const questsJson = localStorage.getItem(`habit-berserk-quests-${userId}`)
     
-    return {
+    const state = {
       character: characterJson ? JSON.parse(characterJson) : null,
       quests: questsJson ? JSON.parse(questsJson) : [],
     }
+    
+    console.log('Loaded state:', state)
+    return state
   } catch (error) {
     console.error('Error loading state from localStorage:', error)
     return { character: null, quests: [] }
@@ -66,7 +75,14 @@ const saveState = (state: { character: Character; quests: Quest[] }, userId: str
   if (typeof window === 'undefined') return
   
   try {
-    console.log('Saving state to localStorage:', state)
+    console.log('Saving state to localStorage for user:', userId)
+    console.log('State to save:', state)
+    
+    if (!userId) {
+      console.error('No user ID provided for saving state')
+      return
+    }
+    
     localStorage.setItem(`habit-berserk-character-${userId}`, JSON.stringify(state.character))
     localStorage.setItem(`habit-berserk-quests-${userId}`, JSON.stringify(state.quests))
     console.log('State saved successfully')
@@ -99,60 +115,52 @@ const initialState = {
     lastQuestCompleted: null,
   },
   quests: [],
+  userId: null,
+  isInitialized: false,
 }
 
 export const useStore = create<Store>((set, get) => ({
-  userId: null,
-  character: initialState.character,
-  quests: initialState.quests,
-  isInitialized: false,
-  
-  // Initialize the store
-  initialize: () => {
-    try {
-      const { data: session } = useSession()
-      const userId = session?.user?.id || null
-      
-      if (userId) {
-        set({ userId })
-        // Load state from localStorage for this user
-        const savedState = loadState(userId)
-        
-        if (savedState.character && savedState.quests.length > 0) {
-          set({ 
-            character: savedState.character,
-            quests: savedState.quests,
-            isInitialized: true 
-          })
-          console.log('State loaded from localStorage for user:', userId)
-        } else {
-          // Set default state if nothing is saved for this user
-          set({ isInitialized: true })
-          console.log('No saved state found for user, using defaults:', userId)
-        }
-      } else {
-        set({ isInitialized: true })
-        console.log('No user session found')
-      }
-    } catch (error) {
-      console.error('Error initializing store:', error)
-      set({ isInitialized: true })
+  ...initialState,
+
+  initialize: (userId: string) => {
+    if (!userId) {
+      console.error('Cannot initialize store: No user ID provided')
+      return
     }
+
+    if (get().isInitialized && get().userId === userId) {
+      console.log('Store already initialized for user:', userId)
+      return
+    }
+
+    console.log('Initializing store for user:', userId)
+    const { character, quests } = loadState(userId)
+    
+    set({
+      userId,
+      character: character || initialState.character,
+      quests: quests || [],
+      isInitialized: true,
+    })
+    
+    console.log('Store initialized with state:', { character, quests })
   },
-  
-  // Save state to localStorage
+
   saveState: () => {
-    try {
-      const state = get()
-      const stateToSave = {
-        character: state.character,
-        quests: state.quests
-      }
-      saveState(stateToSave, state.userId)
-      console.log('State saved to localStorage for user:', state.userId)
-    } catch (error) {
-      console.error('Error saving state:', error)
+    const state = get()
+    if (!state.userId) {
+      console.error('Cannot save state: No user ID')
+      return
     }
+    
+    console.log('Saving current state for user:', state.userId)
+    saveState(
+      {
+        character: state.character,
+        quests: state.quests,
+      },
+      state.userId
+    )
   },
   
   // Update character

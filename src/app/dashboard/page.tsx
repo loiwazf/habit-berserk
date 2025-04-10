@@ -12,11 +12,19 @@ import { useRouter } from 'next/navigation'
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { quests, refreshDailyQuests, resetProgress, character, forceRefreshDailyQuests } = useStore()
+  const { quests, refreshDailyQuests, resetProgress, character, forceRefreshDailyQuests, initialize, saveState } = useStore()
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [showDebug, setShowDebug] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Debug logging for session
+  useEffect(() => {
+    console.log('Session status:', status)
+    console.log('Full session data:', session)
+    console.log('User ID from session:', session?.user?.id)
+    console.log('User email from session:', session?.user?.email)
+  }, [status, session])
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -24,6 +32,27 @@ export default function DashboardPage() {
       router.push('/auth/signin')
     }
   }, [status, router])
+
+  // Initialize store with user session
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.email) {
+      console.log('Initializing store with user email:', session.user.email)
+      initialize(session.user.email)
+    } else {
+      console.log('Cannot initialize store:', { status, userEmail: session?.user?.email })
+    }
+  }, [status, session, initialize])
+
+  // Save state when it changes
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.email) {
+      console.log('Saving state for user:', session.user.email)
+      console.log('Current state:', { character, quests })
+      saveState()
+    } else {
+      console.log('Cannot save state:', { status, userEmail: session?.user?.email })
+    }
+  }, [character, quests, status, session, saveState])
 
   // Set isClient to true after component mounts
   useEffect(() => {
