@@ -258,76 +258,62 @@ export const useStore = create<Store>((set, get) => ({
   
   // Complete a quest
   completeQuest: (questId: string, date?: Date) => {
-    const completionDate = date || new Date()
-    const dateStr = completionDate.toISOString().split('T')[0]
+    const state = get()
+    const quest = state.quests.find(q => q.id === questId)
     
-    set((state) => {
-      const quest = state.quests.find((q) => q.id === questId)
-      if (!quest) return state
+    if (!quest) {
+      console.error('Quest not found:', questId)
+      return
+    }
 
-      // Check if quest is already completed for this date
-      const isAlreadyCompleted = quest.completedInstances.some(
-        instance => instance.date === dateStr
-      )
-      if (isAlreadyCompleted) return state
+    const targetDate = date || new Date()
+    const dateStr = targetDate.toISOString().split('T')[0]
+    
+    // Check if already completed for this date
+    const alreadyCompleted = quest.completedInstances.some(
+      instance => instance.date === dateStr
+    )
+    
+    if (alreadyCompleted) {
+      console.log('Quest already completed for this date:', dateStr)
+      return
+    }
 
-      const instance: QuestInstance = {
-        date: dateStr,
-        timestamp: completionDate.toISOString(),
-        xp: quest.xpReward || quest.xp || 0,
-        statBoosts: quest.statBoosts || {}
-      }
+    const xpReward = quest.xpReward || quest.xp || 0
 
-      // Add XP to the character
-      const xpToAdd = quest.xpReward || quest.xp || 0
-      const character = state.character
-      
-      // Calculate new XP and level
-      let newXP = character.xp + xpToAdd
-      let newLevel = character.level
-      let newXPToNextLevel = character.xpToNextLevel
-      
-      // Check for level up
-      while (newXP >= newXPToNextLevel) {
-        newXP -= newXPToNextLevel
-        newLevel++
-        newXPToNextLevel = Math.floor(newXPToNextLevel * 1.5)
-      }
+    // Create new completion instance with all required properties
+    const completionInstance: QuestInstance = {
+      id: crypto.randomUUID(),
+      date: dateStr,
+      completedAt: targetDate,
+      xpGained: xpReward,
+      xp: xpReward,
+      timestamp: new Date().toISOString(),
+      statBoosts: quest.statBoosts || {}
+    }
 
-      // Apply stat boosts if they exist
-      const updatedStats = { ...character.stats }
-      if (quest.statBoosts) {
-        Object.entries(quest.statBoosts).forEach(([stat, boost]) => {
-          if (boost && stat in updatedStats) {
-            updatedStats[stat as keyof typeof updatedStats] += boost
-          }
-        })
-      }
-      
-      // Update character with new stats
-      const updatedCharacter = {
-        ...character,
-        level: newLevel,
-        xp: newXP,
-        xpToNextLevel: newXPToNextLevel,
-        lastQuestCompleted: completionDate.toISOString(),
-        stats: updatedStats
-      }
+    // Update quest status
+    const updatedQuest = {
+      ...quest,
+      completedInstances: [...quest.completedInstances, completionInstance],
+      status: quest.maxCompletions && quest.completedInstances.length + 1 >= quest.maxCompletions
+        ? 'completed' as QuestStatus
+        : 'active' as QuestStatus
+    }
 
-      const updatedQuest: Quest = {
-        ...quest,
-        completedInstances: [...quest.completedInstances, instance],
-        failedInstances: quest.failedInstances || [],
-        completionCount: (quest.completionCount || 0) + 1,
-        status: (quest.completionCount || 0) + 1 >= (quest.maxCompletions || 1) ? 'completed' as QuestStatus : 'active' as QuestStatus,
-        completedAt: (quest.completionCount || 0) + 1 >= (quest.maxCompletions || 1) ? completionDate.toISOString() : null
+    // Update store
+    set(state => ({
+      ...state,
+      quests: state.quests.map(q => q.id === questId ? updatedQuest : q),
+      character: {
+        ...state.character,
+        xp: state.character.xp + xpReward,
+        xpToNextLevel: calculateXpToNextLevel(state.character.level),
+        lastQuestCompleted: targetDate.toISOString()
       }
+    }))
 
-      return {
-        character: updatedCharacter,
-        quests: state.quests.map((q) => (q.id === questId ? updatedQuest : q))
-      }
-    })
+    // Save state
     get().saveState()
   },
   
@@ -418,13 +404,17 @@ export const useStore = create<Store>((set, get) => ({
       if (!quest) return state
 
       const instance: QuestInstance = {
+        id: crypto.randomUUID(),
         date: new Date().toISOString().split('T')[0],
-        timestamp: new Date().toISOString(),
+        completedAt: new Date(),
+        xpGained: 0,
         xp: 0,
+        timestamp: new Date().toISOString(),
         statBoosts: {}
       }
 
       return {
+        ...state,
         quests: state.quests.map((q) =>
           q.id === questId
             ? {
@@ -436,32 +426,52 @@ export const useStore = create<Store>((set, get) => ({
         )
       }
     })
-    get().saveState()
   },
   
   // Uncheck a quest
-  uncheckQuest: (questId, date?: Date) => {
+  uncheckQuest: (questId: string, date?: Date) => {
+    const state = get()
+    const quest = state.quests.find(q => q.id === questId)
+    
+    if (!quest) {
+      console.error('Quest not found:', questId)
+      return
+    }
+
     const targetDate = date || new Date()
     const dateStr = targetDate.toISOString().split('T')[0]
     
-    set((state) => {
-      const quest = state.quests.find((q) => q.id === questId)
-      if (!quest) return state
+    // Find the completion instance for this date
+    const completionIndex = quest.completedInstances.findIndex(
+      instance => instance.completedAt.toISOString().split('T')[0] === dateStr
+    )
+    
+    if (completionIndex === -1) {
+      console.error('Completion instance not found for date:', dateStr)
+      return
+    }
 
-      const updatedQuest: Quest = {
-        ...quest,
-        completedInstances: quest.completedInstances.filter(
-          instance => instance.date !== dateStr
-        ),
-        completionCount: Math.max(0, (quest.completionCount || 0) - 1),
-        status: 'active' as QuestStatus,
-        completedAt: null
-      }
+    // Get the completion instance to know how much XP to remove
+    const completionInstance = quest.completedInstances[completionIndex]
+    
+    // Remove the completion instance
+    const updatedQuest = {
+      ...quest,
+      completedInstances: quest.completedInstances.filter((_, index) => index !== completionIndex),
+      status: 'active' as QuestStatus,
+    }
 
-      return {
-        quests: state.quests.map((q) => (q.id === questId ? updatedQuest : q))
+    // Update the quest in the store
+    set(state => ({
+      quests: state.quests.map(q => q.id === questId ? updatedQuest : q),
+      character: {
+        ...state.character,
+        xp: state.character.xp - (completionInstance.xpGained || 0),
+        xpToNextLevel: calculateXpToNextLevel(state.character.level),
       }
-    })
+    }))
+
+    // Save the updated state
     get().saveState()
   }
 })) 

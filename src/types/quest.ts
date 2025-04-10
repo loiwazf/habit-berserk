@@ -2,7 +2,10 @@ export type QuestType = 'daily' | 'weekly' | 'monthly' | 'custom'
 export type QuestStatus = 'active' | 'completed' | 'failed'
 
 export interface QuestInstance {
+  id: string
   date: string
+  completedAt: Date
+  xpGained: number
   xp: number
   timestamp: string
   statBoosts?: {
