@@ -26,7 +26,6 @@ const handler = NextAuth({
       try {
         console.log('Session callback:', { session, token, user })
         if (session.user && session.user.email) {
-          // Use the email as a unique identifier since it's guaranteed to be unique
           session.user.id = session.user.email
           console.log('Set user ID in session:', session.user.id)
         }
@@ -51,8 +50,25 @@ const handler = NextAuth({
   },
   pages: {
     signIn: '/auth/signin',
+    error: '/auth/error',
   },
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+      },
+    },
+  },
   logger: {
     error(code, metadata) {
       console.error('NextAuth error:', code, metadata)
