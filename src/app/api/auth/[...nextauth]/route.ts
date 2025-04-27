@@ -14,30 +14,56 @@ const handler = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log('SignIn callback:', { user, account, profile })
-      return true
+      try {
+        console.log('SignIn callback:', { user, account, profile })
+        return true
+      } catch (error) {
+        console.error('SignIn error:', error)
+        return false
+      }
     },
     async session({ session, token, user }) {
-      console.log('Session callback:', { session, token, user })
-      if (session.user && session.user.email) {
-        // Use the email as a unique identifier since it's guaranteed to be unique
-        session.user.id = session.user.email
-        console.log('Set user ID in session:', session.user.id)
+      try {
+        console.log('Session callback:', { session, token, user })
+        if (session.user && session.user.email) {
+          // Use the email as a unique identifier since it's guaranteed to be unique
+          session.user.id = session.user.email
+          console.log('Set user ID in session:', session.user.id)
+        }
+        return session
+      } catch (error) {
+        console.error('Session error:', error)
+        return session
       }
-      return session
     },
     async jwt({ token, user, account, profile }) {
-      console.log('JWT callback:', { token, user, account, profile })
-      if (user && user.email) {
-        token.sub = user.email
+      try {
+        console.log('JWT callback:', { token, user, account, profile })
+        if (user && user.email) {
+          token.sub = user.email
+        }
+        return token
+      } catch (error) {
+        console.error('JWT error:', error)
+        return token
       }
-      return token
     }
   },
   pages: {
     signIn: '/auth/signin',
   },
   debug: true,
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth error:', code, metadata)
+    },
+    warn(code) {
+      console.warn('NextAuth warning:', code)
+    },
+    debug(code, metadata) {
+      console.log('NextAuth debug:', code, metadata)
+    }
+  }
 })
 
 export { handler as GET, handler as POST } 

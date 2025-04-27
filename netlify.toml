@@ -6,6 +6,17 @@
   NEXT_TELEMETRY_DISABLED = "1"
   NEXT_PUBLIC_APP_URL = "https://habit-berserk.netlify.app"
   NODE_VERSION = "18"
+  NETLIFY_NEXT_PLUGIN_SKIP = "false"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs" 
+  package = "@netlify/plugin-nextjs"
+  [plugins.inputs]
+    nextConfigDir = "."
+    buildCommand = "npm run build"
+    devCommand = "npm run dev"
+    publishDir = ".next"
+    functionsDir = "netlify/functions"
+    edgeFunctionsDir = "netlify/edge-functions"
+    serverlessFunctionsDir = "netlify/functions"
+    includeFiles = ["public/**/*"]
+    excludeFiles = ["node_modules/**/*"] 
